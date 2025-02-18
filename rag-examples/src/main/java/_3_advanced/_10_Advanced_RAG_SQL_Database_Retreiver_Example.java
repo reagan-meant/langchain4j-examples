@@ -9,6 +9,7 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import org.h2.jdbcx.JdbcDataSource;
 import shared.Assistant;
+import static dev.langchain4j.internal.Utils.getOrDefault;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -17,10 +18,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
+import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import static shared.Utils.*;
 
 public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
+    static String GEMINI_API_KEY = getOrDefault(System.getenv("GEMINI_API_KEY"), "");
 
 
     /**
@@ -52,10 +54,9 @@ public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
     private static Assistant createAssistant() {
 
         DataSource dataSource = createDataSource();
-
-        ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
-                .apiKey(OPENAI_API_KEY)
-                .modelName(GPT_4_O_MINI)
+        ChatLanguageModel chatLanguageModel = GoogleAiGeminiChatModel.builder()
+                .apiKey(GEMINI_API_KEY)
+                .modelName("gemini-2.0-flash")
                 .build();
 
         ContentRetriever contentRetriever = SqlDatabaseContentRetriever.builder()
