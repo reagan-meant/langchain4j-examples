@@ -12,7 +12,6 @@ import javax.sql.DataSource;
 import org.mariadb.jdbc.MariaDbDataSource;
 
 import _2_naive.Naive_RAG_Example;
-import dev.langchain4j.experimental.rag.content.retriever.sql.SqlDatabaseContentRetriever;
 import static dev.langchain4j.internal.Utils.getOrDefault;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -30,15 +29,8 @@ public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
     static String DB_URL = getOrDefault(System.getenv("DB_URL"), "jdbc:mariadb://localhost:3306/openmrs");
     static String DB_USER = getOrDefault(System.getenv("DB_USER"), "root");
     static String DB_PASSWORD = getOrDefault(System.getenv("DB_PASSWORD"), "password");
-    //static String MODEL_NAME = "llama3.2"; // try other local ollama model names
-    
-    //static String MODEL_NAME = "deepseek-r1:1.5b"; // try other local ollama model names
-    //static String MODEL_NAME = "phi4"; // try other local ollama model names
-
-    //static String MODEL_NAME = "gemma2:2b";
-    static String MODEL_NAME = "qwen";
-    //static String BASE_URL = "http://127.0.0.1:11434";
-    static String BASE_URL = "http://localhost:11435"; // local ollama base url
+    static String MODEL_NAME = "llama3.2";
+    static String BASE_URL = "http://localhost:11435";
   
 
     /**
@@ -73,14 +65,14 @@ public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
         ChatLanguageModel chatLanguageModel2 = GoogleAiGeminiChatModel.builder()
                 .apiKey(GEMINI_API_KEY)
                 .modelName("gemini-2.0-flash")
-                //.logRequestsAndResponses(true)
+                .logRequestsAndResponses(true)
                 .build();
 
         ChatLanguageModel chatLanguageModel = OllamaChatModel.builder()
               .baseUrl(BASE_URL)
               .modelName(MODEL_NAME)
-              //.logRequests(true)
-              //.logResponses(true)
+              .logRequests(true)
+              .logResponses(true)
               .timeout(Duration.ofMinutes(5))  // Set 5-minute timeout
               .build();
 
@@ -98,7 +90,6 @@ public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
                 .sqlDialect("MySQL")
                 .chatLanguageModel(chatLanguageModel)
                 .build();
-                //contentRetriever.retrieve(query)
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatLanguageModel)
                 .contentRetriever(contentRetriever)

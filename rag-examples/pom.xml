@@ -109,6 +109,18 @@
             <artifactId>mariadb-java-client</artifactId>
             <version>2.7.4</version>
         </dependency>
+    
+      <dependency>
+        <groupId>dev.langchain4j</groupId>
+        <artifactId>langchain4j-experimental-sql</artifactId>
+        <version>1.0.0-beta1</version>
+      </dependency>
+    <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.36</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
 <build>
@@ -125,6 +137,16 @@
         </execution>
       </executions>
     </plugin>
+   <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.11.0</version>
+    <configuration>
+     <compilerArgs>
+      <arg>--enable-preview</arg>
+     </compilerArgs>
+    </configuration>
+   </plugin>
   </plugins>
 </build>
 

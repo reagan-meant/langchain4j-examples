@@ -16,5 +16,10 @@ package shared;
  */
 public interface Assistant {
 
+/*     @SystemMessage({
+                    """
+                    This is part of a database schema, Do not output anything else aside from a valid SQL statement!:
+                    """
+            }) */
     String answer(String query);
 }
