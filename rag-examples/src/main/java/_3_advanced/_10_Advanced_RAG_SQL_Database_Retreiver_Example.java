@@ -1,27 +1,37 @@
 package _3_advanced;
 
-import _2_naive.Naive_RAG_Example;
-import dev.langchain4j.experimental.rag.content.retriever.sql.SqlDatabaseContentRetriever;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.rag.content.retriever.ContentRetriever;
-import dev.langchain4j.service.AiServices;
-import org.h2.jdbcx.JdbcDataSource;
-import shared.Assistant;
-
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
 
-import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
-import static shared.Utils.*;
+import javax.sql.DataSource;
+
+import org.mariadb.jdbc.MariaDbDataSource;
+
+import _2_naive.Naive_RAG_Example;
+import static dev.langchain4j.internal.Utils.getOrDefault;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.localai.LocalAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
+import dev.langchain4j.service.AiServices;
+import shared.Assistant;
+import static shared.Utils.startConversationWith;
+import static shared.Utils.toPath;
 
 public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
-
+    static String GEMINI_API_KEY = getOrDefault(System.getenv("GEMINI_API_KEY"), "demoKey");
+    static String DB_URL = getOrDefault(System.getenv("DB_URL"), "jdbc:mariadb://localhost:3306/openmrs");
+    static String DB_USER = getOrDefault(System.getenv("DB_USER"), "root");
+    static String DB_PASSWORD = getOrDefault(System.getenv("DB_PASSWORD"), "password");
+    static String MODEL_NAME = "llama3.2";
+    static String BASE_URL = "http://localhost:11435";
+  
 
     /**
      * Please refer to {@link Naive_RAG_Example} for a basic context.
@@ -52,17 +62,34 @@ public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
     private static Assistant createAssistant() {
 
         DataSource dataSource = createDataSource();
-
-        ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
-                .apiKey(OPENAI_API_KEY)
-                .modelName(GPT_4_O_MINI)
+        ChatLanguageModel chatLanguageModel2 = GoogleAiGeminiChatModel.builder()
+                .apiKey(GEMINI_API_KEY)
+                .modelName("gemini-2.0-flash")
+                .logRequestsAndResponses(true)
                 .build();
 
+        ChatLanguageModel chatLanguageModel = OllamaChatModel.builder()
+              .baseUrl(BASE_URL)
+              .modelName(MODEL_NAME)
+              .logRequests(true)
+              .logResponses(true)
+              .timeout(Duration.ofMinutes(5))  // Set 5-minute timeout
+              .build();
+
+        ChatLanguageModel chatLanguageModel3 = LocalAiChatModel.builder()
+            .baseUrl("http://localhost:8080/v1")
+            .modelName("gpt-4")
+            //.maxTokens(3)
+            .logRequests(true)
+            .logResponses(true)
+            .temperature(0.0)
+            .timeout(Duration.ofMinutes(5))  // Set 5-minute timeout
+            .build();
         ContentRetriever contentRetriever = SqlDatabaseContentRetriever.builder()
                 .dataSource(dataSource)
+                .sqlDialect("MySQL")
                 .chatLanguageModel(chatLanguageModel)
                 .build();
-
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatLanguageModel)
                 .contentRetriever(contentRetriever)
@@ -72,16 +99,22 @@ public class _10_Advanced_RAG_SQL_Database_Retreiver_Example {
 
     private static DataSource createDataSource() {
 
-        JdbcDataSource dataSource = new JdbcDataSource();
-        dataSource.setURL("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1");
-        dataSource.setUser("sa");
-        dataSource.setPassword("sa");
+        DataSource dataSource = setupDataSource();
 
-        String createTablesScript = read("sql/create_tables.sql");
-        execute(createTablesScript, dataSource);
+        return dataSource;
+    }
 
-        String prefillTablesScript = read("sql/prefill_tables.sql");
-        execute(prefillTablesScript, dataSource);
+    private static DataSource setupDataSource() {
+        MariaDbDataSource dataSource = new MariaDbDataSource();
+
+        try {
+            dataSource.setUrl(DB_URL);
+            dataSource.setUser(DB_USER);
+            dataSource.setPassword(DB_PASSWORD);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         return dataSource;
     }
